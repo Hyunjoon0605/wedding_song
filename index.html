@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>결혼식 BGM 셀렉터</title>
+  <style>
+    :root {
+      --bg-color: #f8f9fa;
+      --card-bg: #ffffff;
+      --primary: #4a5568;
+      --accent: #e5989b;
+      --accent-hover: #b5838d;
+      --text: #2d3748;
+      --text-muted: #718096;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text);
+      padding: 24px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    header h1 {
+      font-size: 24px;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    header p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* 고정형 상단 플레이어 */
+    .player-section {
+      position: sticky;
+      top: 16px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      padding: 16px;
+      margin-bottom: 32px;
+      z-index: 100;
+      border: 1px solid var(--border);
+    }
+
+    .player-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .now-playing {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--primary);
+    }
+
+    .video-container {
+      position: relative;
+      padding-bottom: 42%; /* 16:9 비율 유지하되 컴팩트하게 */
+      height: 0;
+      overflow: hidden;
+      border-radius: 8px;
+      background-color: #000;
+    }
+
+    .video-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* 카테고리 그리드 */
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .step-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border: 1px solid var(--border);
+    }
+
+    .step-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--accent);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .song-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .song-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #fafafa;
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .song-item:hover {
+      background: #f1f5f9;
+      border-color: var(--accent);
+    }
+
+    .song-item.active {
+      background: #fff0f3;
+      border-color: var(--accent);
+    }
+
+    .song-info {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      margin-right: 12px;
+    }
+
+    .song-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .song-memo {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .btn-play {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-play:hover {
+      background-color: var(--accent-hover);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>🎵 결혼식 순서별 BGM 후보</h1>
+      <p>곡을 클릭하면 상단 플레이어에서 바로 들어볼 수 있습니다.</p>
+    </header>
+
+    <div class="player-section">
+      <div class="player-header">
+        <span class="now-playing" id="nowPlayingText">▶ 곡을 선택해 주세요</span>
+      </div>
+      <div class="video-container">
+        <iframe id="ytPlayer" src="https://www.youtube.com/embed/" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+    </div>
+
+    <div class="section-grid" id="playlistGrid">
+      </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 💡 여기서 곡 목록과 유튜브 링크를 수정/추가하시면 됩니다!
+    // =========================================================================
+    const weddingData = [
+      {
+        category: "1. 오프닝 / 식전 안내",
+        songs: [
+          { title: "후보 1: 어바웃 타임 OST - How Long Will I Love You", memo: "잔잔하고 따뜻한 느낌", url: "https://www.youtube.com/watch?v=laL0C1_zFjU" },
+          { title: "후보 2: 라라랜드 OST - Mia & Sebastian's Theme", memo: "피아노 연주곡", url: "https://www.youtube.com/watch?v=0k5Hj_nQJ9Y" }
+        ]
+      },
+      {
+        category: "2. 화촉 점화 (양가 어머님)",
+        songs: [
+          { title: "후보 1: 황진이 OST - 꽃날", memo: "국악 퓨전 / 전통적이고 밝은 분위기", url: "https://www.youtube.com/watch?v=kYJ_tE621aQ" },
+          { title: "후보 2: 나비 - Someday", memo: "우아하고 차분한 무드", url: "" }
+        ]
+      },
+      {
+        category: "3. 신랑 입장",
+        songs: [
+          { title: "후보 1: 콜드플레이 - Viva La Vida", memo: "웅장하고 힘찬 분위기", url: "https://www.youtube.com/watch?v=dvgZkm1xWPE" },
+          { title: "후보 2: Imagine Dragons - Believer", memo: "강렬하고 트렌디한 입장", url: "" },
+          { title: "후보 3: 킹스맨 OST - Manners Maketh Man", memo: "클래식하면서 비트감 있음", url: "" }
+        ]
+      },
+      {
+        category: "4. 신부 입장",
+        songs: [
+          { title: "후보 1: Ellie Goulding - How Long Will I Love You", memo: "감성적이고 로맨틱한 분위기", url: "" },
+          { title: "후보 2: Christina Perri - A Thousand Years", memo: "가장 대표적인 신부 입장곡", url: "https://www.youtube.com/watch?v=rtOvBOTyX00" },
+          { title: "후보 3: 디즈니 라푼젤 - I See the Light", memo: "동화 같은 무드", url: "" }
+        ]
+      },
+      {
+        category: "5. 양가 부모님 및 내빈 인사",
+        songs: [
+          { title: "후보 1: 성시경 - 두 사람 (Piano Ver.)", memo: "눈물 방지용 잔잔한 피아노", url: "" },
+          { title: "후보 2: 노리플라이 - 바라만 봐도 좋은데", memo: "따뜻하고 편안한 선율", url: "" }
+        ]
+      },
+      {
+        category: "6. 신랑·신부 행진 (엔딩)",
+        songs: [
+          { title: "후보 1: Stevie Wonder - Isn't She Lovely", memo: "신나고 경쾌한 리듬", url: "" },
+          { title: "후보 2: Maroon 5 - Sugar", memo: "축제 분위기 / 관객 호응 좋음", url: "" },
+          { title: "후보 3: 영화 어바웃 타임 - Il Mondo", memo: "벅차오르는 감동 엔딩", url: "" }
+        ]
+      }
+    ];
+
+    // =========================================================================
+    // YouTube URL에서 Video ID 추출 함수
+    // =========================================================================
+    function getYouTubeId(url) {
+      if (!url) return null;
+      // 일반 URL, 공유 단축 URL(youtu.be), embed URL 등 모두 대응
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : url; // ID만 적어도 동작
+    }
+
+    // 곡 재생 처리
+    function playSong(title, categoryName, url) {
+      const videoId = getYouTubeId(url);
+      const player = document.getElementById('ytPlayer');
+      const infoText = document.getElementById('nowPlayingText');
+
+      if (!videoId) {
+        alert('등록된 YouTube 링크가 없습니다. 코드의 url 부분을 채워주세요!');
+        return;
+      }
+
+      player.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+      infoText.textContent = `▶ [${categoryName}] ${title}`;
+    }
+
+    // 화면 렌더링
+    function renderGrid() {
+      const grid = document.getElementById('playlistGrid');
+      grid.innerHTML = '';
+
+      weddingData.forEach((section, sIdx) => {
+        const card = document.createElement('div');
+        card.className = 'step-card';
+
+        const title = document.createElement('div');
+        title.className = 'step-title';
+        title.textContent = section.category;
+        card.appendChild(title);
+
+        const list = document.createElement('ul');
+        list.className = 'song-list';
+
+        section.songs.forEach((song, idx) => {
+          const item = document.createElement('li');
+          item.className = 'song-item';
+          
+          item.innerHTML = `
+            <div class="song-info">
+              <span class="song-title">${song.title}</span>
+              <span class="song-memo">${song.memo || ''}</span>
+            </div>
+            <button class="btn-play">재생</button>
+          `;
+
+          item.addEventListener('click', () => {
+            // 활성 스타일 표시
+            document.querySelectorAll('.song-item').forEach(el => el.classList.remove('active'));
+            item.classList.add('active');
+            playSong(song.title, section.category, song.url);
+          });
+
+          list.appendChild(item);
+        });
+
+        card.appendChild(list);
+        grid.appendChild(card);
+      });
+    }
+
+    // 초기 실행
+    window.onload = renderGrid;
+  </script>
+</body>
+</html>
